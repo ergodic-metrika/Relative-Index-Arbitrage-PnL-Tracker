@@ -185,7 +185,7 @@ print("Minimum Tracking Error:", f(optimal_vix, TAIEX_returns, PNL_returns))
 # Read in the portfolio returns data from a CSV file
 R_first=df["PnL Index"].iloc[0,]
 R_first
-R_last=df["PnL Index"].iloc[273,]  #Always excel's actual row-2
+R_last = df["PnL Index"].iloc[-1]   #Always excel's actual row-2
 R_last
 
 
