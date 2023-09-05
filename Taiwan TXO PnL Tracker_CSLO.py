@@ -10,11 +10,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 
-#Disclaimer: The relative arbitrage strategy was not fully implemented until October, 2022.
-#Prior to October, 2022, it was a mixture of mostly put spread and a few ITM call as well as futures
-#for quick delta adjustment.
-#Since then, this relative arbitrage strategy has been consistenly implemented.
-
 
 # Load the Excel file
 excel_file = pd.ExcelFile('E:\Derivatives Trading\TAIEX derivatives trading record.xlsx')
