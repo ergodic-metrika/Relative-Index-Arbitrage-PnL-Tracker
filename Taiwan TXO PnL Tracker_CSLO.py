@@ -117,8 +117,6 @@ log_returns = np.log(y2/y2.shift(1))
 
 # Remove NaN values  
 log_returns = log_returns.dropna()  
-
-# Winsorize outliers
 log_returns = mstats.winsorize(log_returns, limits=0.1)
 
 # Fit GARCH model
