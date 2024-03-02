@@ -10,9 +10,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 
+#Disclaimer: The relative arbitrage strategy was not fully implemented until October, 2022.
+#Prior to October, 2022, it was a mixture of mostly put spread and a few ITM call as well as futures
+#for quick delta adjustment.
+#Since then, this relative arbitrage strategy has been consistenly implemented.
+
 
 # Load the Excel file
-excel_file = pd.ExcelFile('E:\Derivatives Trading\TAIEX derivatives trading record.xlsx')
+excel_file = pd.ExcelFile('D:\Derivatives Trading\TAIEX derivatives trading record.xlsx')
 
 # Get the sheet you want to read
 sheet_name = 'ForPython' # Replace with the name of the sheet you want to read
@@ -117,6 +122,8 @@ log_returns = np.log(y2/y2.shift(1))
 
 # Remove NaN values  
 log_returns = log_returns.dropna()  
+
+# Winsorize outliers
 log_returns = mstats.winsorize(log_returns, limits=0.1)
 
 # Fit GARCH model
@@ -128,7 +135,6 @@ sigma = garch_fit.conditional_volatility
 annual_vol = sigma.mean()*np.sqrt(250)*100
 
 print(annual_vol)
-
 
 
 
@@ -178,7 +184,7 @@ print("Minimum Tracking Error:", f(optimal_vix, TAIEX_returns, PNL_returns))
 # Read in the portfolio returns data from a CSV file
 R_first=df["PnL Index"].iloc[0,]
 R_first
-R_last = df["PnL Index"].iloc[-1]   #Always excel's actual row-2
+R_last = df["PnL Index"].iloc[-1]  #Always excel's actual row-2
 R_last
 
 
@@ -211,11 +217,17 @@ print("Standard Deviation of Daily Return:", std_dev)
 Sharpe_Ratio = excess_returns / std_dev
 print("Sharpe Ratio:", Sharpe_Ratio)
 
+# Convert 'Date' column to datetime if it is not already
+df['Date'] = pd.to_datetime(df['Date'])
+
+# Calculate the number of unique trading days
+num_trading_days = df['Date'].nunique()
+print("Number of Actual Trading Days:", num_trading_days)
 
 #Annualized Sharpe ratio
 risk_free_rate_daily = (1 + risk_free_rate) ** (1/250) - 1
 risk_free_rate_daily 
-average_daily_returns = daily_returns.sum()/250
+average_daily_returns = daily_returns.sum()/num_trading_days
 average_daily_returns
 excess_daily_return=average_daily_returns-risk_free_rate_daily 
 excess_daily_return
@@ -252,4 +264,6 @@ alpha = (mean_PNL - (risk_free_rate_daily  +beta * mean_TAIEX))*np.sqrt(250)
 
 # Print alpha
 print("Alpha: ", alpha)
+
+
 
