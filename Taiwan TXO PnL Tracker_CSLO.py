@@ -110,7 +110,6 @@ plt.show()
 #Apparently, when market is in turmoil, tracking error  will be widen, and vice versa.
 #Due to the fact that my derivatives position is well hedged against the market shock
 
-
 #Historical volatility
 #GARCH model volatility
 
@@ -136,39 +135,36 @@ annual_vol = sigma.mean()*np.sqrt(250)*100
 
 print(annual_vol)
 
-
-
 #############################################Scientific experiment#################################
 #Least Squares algo
-from scipy.optimize import least_squares
+#from scipy.optimize import least_squares
 
 # Set lower and upper bounds 
-bounds =(10, 45)
+#bounds =(10, 45)
 
 
 # Objective function
-def f(vix, PNL_returns , TAIEX_returns):
-    diff =  (TAIEX_returns* annual_vol.std() )-(PNL_returns*vix.std()) 
-    return diff.std()
+#def f(vix, PNL_returns , TAIEX_returns):
+#    diff =  (TAIEX_returns* annual_vol.std() )-(PNL_returns*vix.std()) 
+#    return diff.std()
 
 # Set initial guess within bounds
-x0 = [15.0] 
+#x0 = [15.0] 
 
 # By using Trust Region Reflective (bounded)
-result1 = least_squares(f, x0,  bounds=bounds, method='trf', args=(TAIEX_returns, PNL_returns))
-optimal_vix = result1.x[0]
+#result1 = least_squares(f, x0,  bounds=bounds, method='trf', args=(TAIEX_returns, PNL_returns))
+#optimal_vix = result1.x[0]
 
-print("Optimal VIX:", optimal_vix) 
-print("Minimum Tracking Error:", f(optimal_vix, TAIEX_returns, PNL_returns))
-
+#print("Optimal VIX:", optimal_vix) 
+#print("Minimum Tracking Error:", f(optimal_vix, TAIEX_returns, PNL_returns))
 
 
 # By using Levenberg-Marquardt algo (unbounded)
-result2 = least_squares(f, x0, method='lm', args=(TAIEX_returns, PNL_returns))
-optimal_vix = result2.x[0]
+#esult2 = least_squares(f, x0, method='lm', args=(TAIEX_returns, PNL_returns))
+#optimal_vix = result2.x[0]
 
-print("Optimal VIX:", optimal_vix) 
-print("Minimum Tracking Error:", f(optimal_vix, TAIEX_returns, PNL_returns))
+#print("Optimal VIX:", optimal_vix) 
+#print("Minimum Tracking Error:", f(optimal_vix, TAIEX_returns, PNL_returns))
 
 
 #Source: https://github.com/scipy/scipy/blob/v1.9.1/scipy/optimize/_lsq/least_squares.py
@@ -265,5 +261,49 @@ alpha = (mean_PNL - (risk_free_rate_daily  +beta * mean_TAIEX))*np.sqrt(250)
 # Print alpha
 print("Alpha: ", alpha)
 
+# Identify the dates when new peak PnL values occur
+peak_pnl_dates = []
+peak_pnl = df['PnL Index'].iloc[0]
 
+for index, row in df.iterrows():
+    if row['PnL Index'] > peak_pnl:
+        peak_pnl = row['PnL Index']
+        peak_pnl_dates.append(row['Date'])
 
+# Calculate the number of days between each consecutive peak PnL date
+days_between_peaks = []
+
+for i in range(1, len(peak_pnl_dates)):
+    days = (peak_pnl_dates[i] - peak_pnl_dates[i-1]).days
+    days_between_peaks.append(days)
+
+# Calculate the average number of days between peak PnL dates
+if len(days_between_peaks) > 0:
+    avg_days_between_peaks = sum(days_between_peaks) / len(days_between_peaks)
+    print("Average number of days between new peak PnL values:", avg_days_between_peaks)
+else:
+    print("There are no new peak PnL values.")
+    
+#Excess return of my Options PnL vesus the TAIEX since the beginning
+# Calculate daily returns for PnL and TAIEX
+df['PNL_returns'] = df['PnL Index'].pct_change()
+df['TAIEX_returns'] = df['TAIEX'].pct_change()
+
+# Calculate cumulative returns for PnL and TAIEX
+df['PnL_cumulative_return'] = (1 + df['PNL_returns']).cumprod()
+df['TAIEX_cumulative_return'] = (1 + df['TAIEX_returns']).cumprod()
+
+# Plot the cumulative returns
+plt.figure(figsize=(14, 7))
+plt.xticks(rotation=45)
+plt.plot(df['Date'], df['PnL_cumulative_return'], label='PnL Cumulative Return',  color='midnightblue')
+plt.plot(df['Date'], df['TAIEX_cumulative_return'], label='TAIEX Cumulative Return', color='dimgrey')
+plt.xlabel('Date')
+plt.ylabel('Cumulative Return')
+plt.title('TAIEX Options PnL vs TAIEX Cumulative Returns')
+plt.legend()
+plt.show()
+
+# Calculate and print the performance difference
+performance_difference = df['PnL_cumulative_return'].iloc[-1] - df['TAIEX_cumulative_return'].iloc[-1]
+print(f"Performance difference between my Options PnL and TAIEX since the beginning: {performance_difference}")
